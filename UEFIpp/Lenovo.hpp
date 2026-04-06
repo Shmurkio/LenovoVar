@@ -62,4 +62,28 @@ namespace Lenovo
 	constexpr ENTRY_KEY SMBIOS_ENTRY_KEY_SYSTEM_UUID				= { SMBIOS_NAMESPACE, SMBIOS_ENTRY_SYSTEM_UUID };
 	constexpr ENTRY_KEY SMBIOS_ENTRY_KEY_BASEBOARD_PLATFORM_ID		= { SMBIOS_NAMESPACE, SMBIOS_ENTRY_BASEBOARD_PLATFORM_ID };
 	constexpr ENTRY_KEY SMBIOS_ENTRY_KEY_OS_PRELOAD_SUFFIX			= { SMBIOS_NAMESPACE, SMBIOS_ENTRY_OS_PRELOAD_SUFFIX };
+
+	// Logs DMI changes to the LDBG buffer.
+	using AppendDmiChangeRecordFn = EFI_STATUS(__fastcall)(PVOID Context, PVOID Key, UINT8 Operation, UINT32 Size);
+
+	// Signature for the function responsible for appending DMI change records:
+	//								AppendDmiChangeRecord proc near
+	//
+	//								arg_0 = qword ptr  8
+	//								arg_8 = qword ptr  10h
+	//								arg_10 = qword ptr  18h
+	//
+	// 48 89 5C 24 08				mov[rsp + arg_0], rbx
+	// 48 89 6C 24 10				mov[rsp + arg_8], rbp
+	// 48 89 74 24 18				mov[rsp + arg_10], rsi
+	// 57							push    rdi
+	// 41 54						push    r12
+	// 41 55						push    r13
+	// 41 56						push    r14
+	// 41 57						push    r15
+	// 48 83 EC 20					sub     rsp, 20h
+	constexpr PCSTR APPEND_DMI_CHANGE_RECORD_SIGNATURE = "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 83 EC 20";
+
+	// LenovoVariableDxe (installs LENOVO_VARIABLE_PROTOCOL) file GUID: C0C64D42-E3D9-4D20-865D-A3DB750F91D6.
+	constexpr CEFI_GUID LENOVO_VARIABLE_DXE_GUID = { 0xC0C64D42, 0xE3D9, 0x4D20, { 0x86, 0x5D, 0xA3, 0xDB, 0x75, 0x0F, 0x91, 0xD6 } };
 }

@@ -4,9 +4,9 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Solution Items/">
-    <File Path="Images/After.jpg" />
-    <File Path="Images/Before.jpg" />
-    <File Path="Images/Shell.jpg" />
+    <File Path="Images/DriverInfo.png" />
+    <File Path="Images/Help.png" />
+    <File Path="Images/UUID.png" />
     <File Path="LICENSE.txt" />
     <File Path="README.md" />
   </Folder>

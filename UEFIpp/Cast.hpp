@@ -13,6 +13,69 @@ namespace Cast
         using TrueType = IntegralConstant<bool, true>;
         using FalseType = IntegralConstant<bool, false>;
 
+        template<typename T>
+        struct RemoveExtent
+        {
+            using Type = T;
+        };
+
+        template<typename T, unsigned long long N>
+        struct RemoveExtent<T[N]>
+        {
+            using Type = T;
+        };
+
+        template<typename T>
+        struct RemoveExtent<T[]>
+        {
+            using Type = T;
+        };
+
+        template<typename T>
+        struct IsArray : FalseType
+        {
+        };
+
+        template<typename T, unsigned long long N>
+        struct IsArray<T[N]> : TrueType
+        {
+        };
+
+        template<typename T>
+        struct IsArray<T[]> : TrueType
+        {
+        };
+
+        template<typename T>
+        struct RemovePointer
+        {
+            using Type = T;
+        };
+
+        template<typename T>
+        struct RemovePointer<T*>
+        {
+            using Type = T;
+        };
+
+        template<typename T>
+        struct RemovePointer<T* const>
+        {
+            using Type = T;
+        };
+
+        template<typename T>
+        struct RemovePointer<T* volatile>
+        {
+            using Type = T;
+        };
+
+        template<typename T>
+        struct RemovePointer<T* const volatile>
+        {
+            using Type = T;
+        };
+
         template<bool B, typename T = void>
         struct EnableIf
         {
@@ -222,6 +285,16 @@ namespace Cast
 
             return Result;
         }
+
+        template<typename T>
+        struct IsVoid : FalseType
+        {
+        };
+
+        template<>
+        struct IsVoid<void> : TrueType
+        {
+        };
     }
 
     template<typename TTo, typename TFrom>
@@ -239,9 +312,52 @@ namespace Cast
         {
             return static_cast<TTo>(Value);
         }
+        else if constexpr (
+            Detail::IsPointer<RawTo>::Value &&
+            Detail::IsArray<RawFrom>::Value
+            )
+        {
+            return reinterpret_cast<TTo>(&Value[0]);
+        }
+        else if constexpr (
+            Detail::IsPointer<RawTo>::Value &&
+            Detail::IsPointer<RawFrom>::Value &&
+            Detail::IsSame<
+            typename Detail::RemoveCv<typename Detail::RemovePointer<RawTo>::Type>::Type,
+            typename Detail::RemoveCv<typename Detail::RemovePointer<RawFrom>::Type>::Type
+            >::Value
+            )
+        {
+            return const_cast<TTo>(Value);
+        }
+        else if constexpr (
+            Detail::IsPointer<RawTo>::Value &&
+            Detail::IsPointer<RawFrom>::Value &&
+            Detail::IsVoid<
+            typename Detail::RemoveCv<
+            typename Detail::RemovePointer<RawTo>::Type
+            >::Type
+            >::Value
+            )
+        {
+            return const_cast<TTo>(static_cast<const void*>(Value));
+        }
         else if constexpr (Detail::IsPointer<RawTo>::Value && Detail::IsPointer<RawFrom>::Value)
         {
-            return reinterpret_cast<TTo>(Value);
+            using ToPointee = typename Detail::RemovePointer<RawTo>::Type;
+            using FromPointee = typename Detail::RemovePointer<RawFrom>::Type;
+
+            if constexpr (Detail::IsSame<
+                typename Detail::RemoveCv<ToPointee>::Type,
+                typename Detail::RemoveCv<FromPointee>::Type
+            >::Value)
+            {
+                return const_cast<TTo>(Value);
+            }
+            else
+            {
+                return reinterpret_cast<TTo>(Value);
+            }
         }
         else if constexpr (Detail::IsIntegral<RawTo>::Value && Detail::IsPointer<RawFrom>::Value)
         {
